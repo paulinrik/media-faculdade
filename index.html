@@ -119,6 +119,8 @@ h1 { font-size: 28px; line-height: 1.1; letter-spacing: -0.01em; }
 .dot.on { background: var(--accent); }
 .tut-nav { display: flex; gap: 10px; justify-content: space-between; align-items: center; }
 .tut-nav .btn { min-width: 104px; }
+.arow .pts { grid-column: 1 / -1; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; margin: -2px 0 4px 2px; }
+.arow .pts:empty { display: none; }
 input.f {
   height: 40px; border: 1px solid var(--line); border-radius: 8px;
   background: var(--surface); color: var(--fg);
@@ -408,6 +410,16 @@ input.num { text-align: right; font-variant-numeric: tabular-nums; }
         var show = !!act && !m.direct && need !== null && num(act.grade) === null;
         inp.placeholder = show ? fmt(need) : 'Nota';
         inp.classList.toggle('hint', show);
+        var pe = row.querySelector('.pts');
+        var w = act ? num(act.weight) : null;
+        var g = act ? num(act.grade) : null;
+        var txt = '';
+        if (act && !m.direct && w) {
+          if (g !== null) txt = 'Rendeu ' + fmt(g * w / 10) + ' de ' + fmt(w) + ' pts';
+          else if (need !== null) txt = 'Vale ' + fmt(w) + ' pts · precisa render ' + fmt(need * w / 10) + ' pts';
+          else txt = 'Vale ' + fmt(w) + ' pts';
+        }
+        pe.textContent = txt;
         if (show) hinted = true;
       });
       var di = b.querySelector('.direct input');
@@ -464,7 +476,8 @@ input.num { text-align: right; font-variant-numeric: tabular-nums; }
       h('button', { class: 'xbtn', type: 'button', 'aria-label': 'Remover atividade', text: '×', onclick: function () {
         m.acts = m.acts.filter(function (x) { return x !== a; });
         render(); saveSoon();
-      } })
+      } }),
+      h('div', { class: 'pts' })
     );
     return row;
   }
@@ -485,7 +498,7 @@ input.num { text-align: right; font-variant-numeric: tabular-nums; }
       h('label', { class: 'direct' }, h('span', { text: 'Nota da M (se já saiu)' }),
         field(m.direct, 'num', '—', 'Nota da M' + (i + 1), 'grade', function (v) { m.direct = v; })),
       acts,
-      h('div', { class: 'hintline', hidden: true, text: 'Em destaque: nota mínima em cada atividade que falta, tirando a mesma nota em todas.' }),
+      h('div', { class: 'hintline', hidden: true, text: 'Em verde: nota mínima em cada atividade que falta, tirando a mesma nota em todas. Embaixo, quantos pontos da M ela rende, pelo peso (regra de três).' }),
       h('div', { class: 'mfoot' },
         h('button', { class: 'btn', type: 'button', text: '+ Atividade', onclick: function () {
           var a = { id: uid(), name: '', grade: '', weight: '' };
