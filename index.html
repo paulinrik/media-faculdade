@@ -108,7 +108,6 @@ h1 { font-size: 28px; line-height: 1.1; letter-spacing: -0.01em; }
 .link { background: none; border: 0; color: var(--muted); font: 600 14px var(--f-body); cursor: pointer; padding: 8px 4px; }
 .demo { background: var(--surface2); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 8px; pointer-events: none; user-select: none; }
 .demo .cap { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; }
-.demo .arow { grid-template-columns: minmax(0, 1fr) 72px 56px; }
 .demo .meter { margin: 6px 0 24px; }
 .demo-ms { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .chip { min-width: 46px; text-align: center; padding: 8px 10px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); font: 700 17px var(--f-display); }
@@ -119,8 +118,6 @@ h1 { font-size: 28px; line-height: 1.1; letter-spacing: -0.01em; }
 .dot.on { background: var(--accent); }
 .tut-nav { display: flex; gap: 10px; justify-content: space-between; align-items: center; }
 .tut-nav .btn { min-width: 104px; }
-.arow .pts { grid-column: 1 / -1; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; margin: -2px 0 4px 2px; }
-.arow .pts:empty { display: none; }
 input.f {
   height: 40px; border: 1px solid var(--line); border-radius: 8px;
   background: var(--surface); color: var(--fg);
@@ -183,11 +180,17 @@ input.num { text-align: right; font-variant-numeric: tabular-nums; }
 .direct { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .direct span { font-size: 13px; color: var(--muted); font-weight: 600; }
 .direct input { width: 84px; }
-.acts { display: flex; flex-direction: column; gap: 6px; }
+.acts { display: flex; flex-direction: column; gap: 12px; }
 .acts.off { opacity: .45; }
-.arow { display: grid; grid-template-columns: minmax(0, 1fr) 72px 56px 32px; gap: 6px; align-items: center; }
-.arow.lab { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; }
-.arow.lab span:nth-child(2), .arow.lab span:nth-child(3) { text-align: right; padding-right: 4px; }
+.arow { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) 36px; gap: 6px 8px; align-items: end; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+.arow:last-child { border-bottom: 0; padding-bottom: 0; }
+.arow .nm { grid-column: 1 / 4; }
+.arow .xbtn { grid-column: 4; grid-row: 1; align-self: center; }
+.cell { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.lb { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; }
+.ptsbox { height: 40px; display: flex; align-items: center; justify-content: flex-end; padding: 0 10px; border-radius: 8px; border: 1px dashed var(--line); font: 600 15px var(--f-body); font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--fg); }
+.ptsbox.need { color: var(--accent); border-color: var(--accent); }
+.ptsbox:empty::before { content: '—'; color: var(--muted); }
 .xbtn { height: 40px; border: 0; background: transparent; color: var(--muted); font-size: 20px; cursor: pointer; border-radius: 8px; }
 .none { font-size: 13px; color: var(--muted); padding: 2px 0 4px; }
 .mfoot { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
@@ -406,21 +409,22 @@ input.num { text-align: right; font-variant-numeric: tabular-nums; }
       var need = r.status === 'open' ? r.avgNeeded : (r.status === 'approved' ? 0 : null);
       b.querySelectorAll('.arow[data-aid]').forEach(function (row) {
         var act = s.ms[i].acts.filter(function (x) { return x.id === row.getAttribute('data-aid'); })[0];
-        var inp = row.children[1];
-        var show = !!act && !m.direct && need !== null && num(act.grade) === null;
-        inp.placeholder = show ? fmt(need) : 'Nota';
-        inp.classList.toggle('hint', show);
-        var pe = row.querySelector('.pts');
+        var inp = row.querySelector('input[data-f="grade"]');
+        var box = row.querySelector('.ptsbox');
+        var lb = row.querySelector('.ptslb');
         var w = act ? num(act.weight) : null;
         var g = act ? num(act.grade) : null;
-        var txt = '';
-        if (act && !m.direct && w) {
-          if (g !== null) txt = 'Rendeu ' + fmt(g * w / 10) + ' de ' + fmt(w) + ' pts';
-          else if (need !== null) txt = 'Vale ' + fmt(w) + ' pts · precisa render ' + fmt(need * w / 10) + ' pts';
-          else txt = 'Vale ' + fmt(w) + ' pts';
-        }
-        pe.textContent = txt;
-        if (show) hinted = true;
+        var has = !!act && !m.direct && !!w;
+        var show = has && need !== null && g === null;
+        inp.placeholder = show ? fmt(need) : 'Nota';
+        inp.classList.toggle('hint', show);
+        box.className = 'ptsbox';
+        lb.textContent = 'Pontos';
+        if (has && g !== null) { lb.textContent = 'Rendeu'; box.textContent = fmt(g * w / 10) + ' / ' + fmtW(w); }
+        else if (show) { lb.textContent = 'Precisa'; box.textContent = fmt(need * w / 10) + ' / ' + fmtW(w); box.classList.add('need'); }
+        else if (has) { box.textContent = '— / ' + fmtW(w); }
+        else { box.textContent = ''; }
+        if (has) hinted = true;
       });
       var di = b.querySelector('.direct input');
       var needM = (!m.direct && m.remaining > EPS && r.status === 'open') ? m.points + r.avgNeeded * m.remaining / 10 : null;
@@ -467,25 +471,24 @@ input.num { text-align: right; font-variant-numeric: tabular-nums; }
     return i;
   }
 
+  function cell(label, child) { return h('label', { class: 'cell' }, h('span', { class: 'lb', text: label }), child); }
   function buildActRow(m, a) {
-    var row = h('div', { class: 'arow', 'data-aid': a.id });
-    row.append(
-      field(a.name, '', 'Atividade', 'Nome da atividade', 'text', function (v) { a.name = v; }),
-      field(a.grade, 'num', 'Nota', 'Nota da atividade', 'grade', function (v) { a.grade = v; }),
-      field(a.weight, 'num', 'Peso', 'Peso da atividade', 'weight', function (v) { a.weight = v; }),
+    var gradeI = field(a.grade, 'num', 'Nota', 'Nota da atividade', 'grade', function (v) { a.grade = v; });
+    gradeI.setAttribute('data-f', 'grade');
+    return h('div', { class: 'arow', 'data-aid': a.id },
+      field(a.name, 'nm', 'Atividade', 'Nome da atividade', 'text', function (v) { a.name = v; }),
       h('button', { class: 'xbtn', type: 'button', 'aria-label': 'Remover atividade', text: '×', onclick: function () {
         m.acts = m.acts.filter(function (x) { return x !== a; });
         render(); saveSoon();
       } }),
-      h('div', { class: 'pts' })
-    );
-    return row;
+      cell('Nota', gradeI),
+      cell('Peso', field(a.weight, 'num', 'Peso', 'Peso da atividade', 'weight', function (v) { a.weight = v; })),
+      h('div', { class: 'cell' }, h('span', { class: 'lb ptslb', text: 'Pontos' }), h('output', { class: 'ptsbox' })));
   }
 
   function buildM(s, m, i) {
     var acts = h('div', { class: 'acts' });
     if (m.acts.length) {
-      acts.append(h('div', { class: 'arow lab' }, h('span', { text: 'Atividade' }), h('span', { text: 'Nota' }), h('span', { text: 'Peso' }), h('span')));
       m.acts.forEach(function (a) { acts.append(buildActRow(m, a)); });
     } else {
       acts.append(h('div', { class: 'none', text: 'Nenhuma atividade. Adicione provas, trabalhos e seminários com seus pesos.' }));
@@ -498,7 +501,7 @@ input.num { text-align: right; font-variant-numeric: tabular-nums; }
       h('label', { class: 'direct' }, h('span', { text: 'Nota da M (se já saiu)' }),
         field(m.direct, 'num', '—', 'Nota da M' + (i + 1), 'grade', function (v) { m.direct = v; })),
       acts,
-      h('div', { class: 'hintline', hidden: true, text: 'Em verde: nota mínima em cada atividade que falta, tirando a mesma nota em todas. Embaixo, quantos pontos da M ela rende, pelo peso (regra de três).' }),
+      h('div', { class: 'hintline', hidden: true, text: 'Em verde: nota mínima em cada atividade que falta, supondo a mesma nota em todas. Em Precisa e Rendeu: pontos da M, calculados pelo peso.' }),
       h('div', { class: 'mfoot' },
         h('button', { class: 'btn', type: 'button', text: '+ Atividade', onclick: function () {
           var a = { id: uid(), name: '', grade: '', weight: '' };
@@ -604,11 +607,18 @@ input.num { text-align: right; font-variant-numeric: tabular-nums; }
       h('div', { class: 'demo-ms' }, h('button', { class: 'btn primary', type: 'button', tabindex: '-1', text: '+ Matéria' })),
       cap('Depois, o nome'), mock('Anatomia', '', '', true));
   }
+  function mrow(nm, g, gph, w, lbl, pts, hintCls, need) {
+    var box = h('output', { class: 'ptsbox' + (need ? ' need' : ''), text: pts });
+    return h('div', { class: 'arow' },
+      mock(nm, 'Atividade', 'nm', true),
+      cell('Nota', mock(g, gph, hintCls)),
+      cell('Peso', mock(w, 'Peso')),
+      h('div', { class: 'cell' }, h('span', { class: 'lb', text: lbl }), box));
+  }
   function demoActs() {
     return h('div', { class: 'demo', 'aria-hidden': 'true' }, cap('Exemplo de uma M'),
-      h('div', { class: 'arow lab' }, h('span', { text: 'Atividade' }), h('span', { text: 'Nota' }), h('span', { text: 'Peso' })),
-      h('div', { class: 'arow' }, mock('Prova 1', '', '', true), mock('8,5', 'Nota'), mock('5', 'Peso')),
-      h('div', { class: 'arow' }, mock('Seminário', '', '', true), mock('', 'Nota'), mock('5', 'Peso')),
+      mrow('Prova 1', '8,5', 'Nota', '5', 'Rendeu', '4,25 / 5'),
+      mrow('Seminário', '', 'Nota', '5', 'Pontos', '— / 5'),
       cap('Seminário ainda sem nota: só o peso'));
   }
   function demoDirect() {
@@ -621,7 +631,7 @@ input.num { text-align: right; font-variant-numeric: tabular-nums; }
         h('div', { class: 'fillmax', style: 'width:60%' }), h('div', { class: 'fill', style: 'width:34%' }),
         h('div', { class: 'tick', style: 'left:59%' }), h('div', { class: 'ticklabel', style: 'left:59%', text: '17,75' })),
       h('div', { class: 'row3' }, h('span', { class: 'sum' }, '10,35 ', h('small', { text: '/ 17,75' })), h('span', { class: 'verdict', text: 'Precisa de 7,40 na M3.' })),
-      h('div', { class: 'arow' }, mock('Prova 3', '', '', true), mock('', '7,40', 'hint'), mock('7', 'Peso')));
+      mrow('Prova 3', '', '7,40', '7', 'Precisa', '5,18 / 7', 'hint', true));
   }
   function demoGear() {
     var g = h('span', { class: 'gear' });
@@ -635,7 +645,7 @@ input.num { text-align: right; font-variant-numeric: tabular-nums; }
     { t: '1. Adicione a matéria', x: 'Toque em + Matéria e escreva o nome. O cartão abre com M1, M2 e M3.', demo: demoAdd },
     { t: '2. Lance as atividades', x: 'Dentro de cada M, toque em + Atividade e preencha nome, nota e peso. Os pesos de uma M somam 10. Se a prova ainda não aconteceu, deixe a nota vazia e coloque só o peso.', demo: demoActs },
     { t: '3. A nota da M já saiu?', x: 'Digite em "Nota da M (se já saiu)". Ela vale no lugar das atividades daquela M.', demo: demoDirect },
-    { t: '4. Veja quanto falta', x: 'O cartão mostra a soma atual, a barra com a marca do mínimo e o que você precisa tirar. Os campos de nota vazios aparecem em verde com a nota mínima de cada atividade que falta.', demo: demoResult },
+    { t: '4. Veja quanto falta', x: 'O cartão mostra a soma atual, a barra com a marca do mínimo e o que você precisa tirar. Em cada atividade, a nota em verde é o mínimo que falta e o campo Precisa mostra quantos pontos da M ela deve render. Depois de lançar a nota, ele mostra quanto rendeu.', demo: demoResult },
     { t: 'Pronto', x: 'Para ver este tutorial de novo, toque no ícone de ajustes no alto da tela e em "Ver tutorial".', demo: demoGear }
   ];
 
