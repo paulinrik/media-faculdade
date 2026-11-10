@@ -106,6 +106,8 @@ input.f {
 input.f::placeholder { color: var(--muted); opacity: .7; }
 input.f:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 input.f.bad { border-color: var(--bad); }
+input.f.hint::placeholder { color: var(--accent); opacity: 1; font-weight: 700; }
+.hintline { font-size: 12.5px; color: var(--muted); }
 input.num { text-align: right; font-variant-numeric: tabular-nums; }
 #target { width: 84px; }
 .bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin: 22px 0 14px; }
@@ -160,7 +162,7 @@ input.num { text-align: right; font-variant-numeric: tabular-nums; }
 .direct input { width: 84px; }
 .acts { display: flex; flex-direction: column; gap: 6px; }
 .acts.off { opacity: .45; }
-.arow { display: grid; grid-template-columns: minmax(0, 1fr) 64px 56px 32px; gap: 6px; align-items: center; }
+.arow { display: grid; grid-template-columns: minmax(0, 1fr) 72px 56px 32px; gap: 6px; align-items: center; }
 .arow.lab { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; }
 .arow.lab span:nth-child(2), .arow.lab span:nth-child(3) { text-align: right; padding-right: 4px; }
 .xbtn { height: 40px; border: 0; background: transparent; color: var(--muted); font-size: 20px; cursor: pointer; border-radius: 8px; }
@@ -277,7 +279,7 @@ input.num { text-align: right; font-variant-numeric: tabular-nums; }
     var max = pts + remW;
     var open = [];
     ms.forEach(function (m, i) { if (m.remaining > EPS) open.push(i); });
-    var status, verdict;
+    var status, verdict, avgNeeded = null;
     if (pts >= target - EPS) {
       status = 'approved';
       verdict = 'Já passou. Soma ' + fmt(pts) + ', o mínimo é ' + fmt(target) + '.';
@@ -289,7 +291,8 @@ input.num { text-align: right; font-variant-numeric: tabular-nums; }
       verdict = 'Mesmo com 10 em tudo, chega a ' + fmt(max) + '.';
     } else {
       status = 'open';
-      var a = fmt(up2((target - pts) * 10 / remW));
+      avgNeeded = up2((target - pts) * 10 / remW);
+      var a = fmt(avgNeeded);
       if (open.length === 1) {
         var i = open[0];
         verdict = ms[i].state === 'empty'
@@ -299,7 +302,7 @@ input.num { text-align: right; font-variant-numeric: tabular-nums; }
         verdict = 'Precisa de média ' + a + ' em tudo que falta (' + open.map(function (i) { return 'M' + (i + 1); }).join(', ') + ').';
       }
     }
-    return { ms: ms, pts: pts, max: max, status: status, verdict: verdict, target: target };
+    return { ms: ms, pts: pts, max: max, status: status, verdict: verdict, target: target, avgNeeded: avgNeeded };
   }
 
   function h(tag, props) {
@@ -379,6 +382,21 @@ input.num { text-align: right; font-variant-numeric: tabular-nums; }
         : m.state === 'partial' ? 'parcial, faltam ' + fmtW(m.remaining) + ' de peso'
         : 'sem notas ainda';
       b.querySelector('.acts').classList.toggle('off', m.direct);
+      var hinted = false;
+      var need = r.status === 'open' ? r.avgNeeded : (r.status === 'approved' ? 0 : null);
+      b.querySelectorAll('.arow[data-aid]').forEach(function (row) {
+        var act = s.ms[i].acts.filter(function (x) { return x.id === row.getAttribute('data-aid'); })[0];
+        var inp = row.children[1];
+        var show = !!act && !m.direct && need !== null && num(act.grade) === null;
+        inp.placeholder = show ? fmt(need) : 'Nota';
+        inp.classList.toggle('hint', show);
+        if (show) hinted = true;
+      });
+      var di = b.querySelector('.direct input');
+      var needM = (!m.direct && m.remaining > EPS && r.status === 'open') ? m.points + r.avgNeeded * m.remaining / 10 : null;
+      di.placeholder = needM !== null ? fmt(needM) : '—';
+      di.classList.toggle('hint', needM !== null);
+      b.querySelector('.hintline').hidden = !hinted;
       var ws = b.querySelector('.wsum');
       if (m.direct) { ws.textContent = 'Atividades ignoradas'; ws.classList.remove('warn'); }
       else {
@@ -420,7 +438,7 @@ input.num { text-align: right; font-variant-numeric: tabular-nums; }
   }
 
   function buildActRow(m, a) {
-    var row = h('div', { class: 'arow' });
+    var row = h('div', { class: 'arow', 'data-aid': a.id });
     row.append(
       field(a.name, '', 'Atividade', 'Nome da atividade', 'text', function (v) { a.name = v; }),
       field(a.grade, 'num', 'Nota', 'Nota da atividade', 'grade', function (v) { a.grade = v; }),
@@ -449,6 +467,7 @@ input.num { text-align: right; font-variant-numeric: tabular-nums; }
       h('label', { class: 'direct' }, h('span', { text: 'Nota da M (se já saiu)' }),
         field(m.direct, 'num', '—', 'Nota da M' + (i + 1), 'grade', function (v) { m.direct = v; })),
       acts,
+      h('div', { class: 'hintline', hidden: true, text: 'Em destaque: nota mínima em cada atividade que falta, tirando a mesma nota em todas.' }),
       h('div', { class: 'mfoot' },
         h('button', { class: 'btn', type: 'button', text: '+ Atividade', onclick: function () {
           var a = { id: uid(), name: '', grade: '', weight: '' };
