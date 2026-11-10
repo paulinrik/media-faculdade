@@ -1,6 +1,6 @@
 {
-  "name": "Média da Faculdade",
-  "short_name": "Médias",
+  "name": "Média da Univali",
+  "short_name": "Univali",
   "description": "Calcula a média de cada matéria e quanto falta para passar.",
   "lang": "pt-BR",
   "start_url": "./",
