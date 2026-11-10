@@ -1,0 +1,581 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#edf1ef" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0c1412" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Médias">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/favicon.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<title>Média da Faculdade</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+html { -webkit-text-size-adjust: 100%; }
+:root { color-scheme: light; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+body { margin: 0; }
+[hidden] { display: none !important; }
+/* Layout: uma coluna, um cartão por matéria com barra de soma (0–30) e marca no mínimo para passar.
+   Cores: verde-garrafa sobre cinza esverdeado, vermelho e âmbar só para estado. */
+:root {
+  --bg: #edf1ef;
+  --surface: #ffffff;
+  --surface2: #f4f7f6;
+  --line: #d6dedb;
+  --fg: #12201b;
+  --muted: #576963;
+  --accent: #0e6b57;
+  --accent-ink: #ffffff;
+  --track: #dbe4e0;
+  --maxfill: #a8cfc3;
+  --ok: #17794a;
+  --ok-bg: #dcf1e4;
+  --warn: #8f5500;
+  --warn-bg: #fbebcd;
+  --bad: #b3261e;
+  --bad-bg: #fadad7;
+  --f-display: 'Bricolage Grotesque', system-ui, sans-serif;
+  --f-body: 'Figtree', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0c1412;
+    --surface: #141f1c;
+    --surface2: #1a2723;
+    --line: #2a3a35;
+    --fg: #e6f0ec;
+    --muted: #93a7a0;
+    --accent: #4cc9a0;
+    --accent-ink: #062018;
+    --track: #223029;
+    --maxfill: #2d5a4c;
+    --ok: #6fd79a;
+    --ok-bg: #163325;
+    --warn: #f0b44c;
+    --warn-bg: #38290f;
+    --bad: #ff8a80;
+    --bad-bg: #3a1a18;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0c1412;
+  --surface: #141f1c;
+  --surface2: #1a2723;
+  --line: #2a3a35;
+  --fg: #e6f0ec;
+  --muted: #93a7a0;
+  --accent: #4cc9a0;
+  --accent-ink: #062018;
+  --track: #223029;
+  --maxfill: #2d5a4c;
+  --ok: #6fd79a;
+  --ok-bg: #163325;
+  --warn: #f0b44c;
+  --warn-bg: #38290f;
+  --bad: #ff8a80;
+  --bad-bg: #3a1a18;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font: 15px/1.45 var(--f-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 56px;
+}
+.wrap { max-width: 640px; margin: 0 auto; }
+h1, h2, h3 { font-family: var(--f-display); margin: 0; text-wrap: balance; }
+h1 { font-size: 28px; line-height: 1.1; letter-spacing: -0.01em; }
+.rule { margin: 14px 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; color: var(--muted); }
+.rule label { color: var(--fg); font-weight: 600; }
+.rule .hint { font-size: 13px; flex-basis: 100%; }
+input.f {
+  height: 40px; border: 1px solid var(--line); border-radius: 8px;
+  background: var(--surface); color: var(--fg);
+  padding: 0 10px; font: 500 16px var(--f-body); min-width: 0; width: 100%;
+}
+input.f::placeholder { color: var(--muted); opacity: .7; }
+input.f:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+input.f.bad { border-color: var(--bad); }
+input.num { text-align: right; font-variant-numeric: tabular-nums; }
+#target { width: 84px; }
+.bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin: 22px 0 14px; }
+#summary { color: var(--muted); font-size: 14px; }
+.btn {
+  height: 40px; border-radius: 10px; padding: 0 14px; font: 600 14px var(--f-body);
+  border: 1px solid var(--line); background: var(--surface); color: var(--fg); cursor: pointer;
+}
+.btn:focus-visible, .subj-head:focus-visible, .xbtn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.danger { color: var(--bad); }
+.btn.danger.armed { background: var(--bad); color: var(--surface); border-color: var(--bad); }
+#app { display: flex; flex-direction: column; gap: 12px; }
+.empty { border: 1px dashed var(--line); border-radius: 14px; padding: 28px 16px; text-align: center; color: var(--muted); }
+
+.subj { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+.subj-head {
+  display: block; width: 100%; text-align: left; background: transparent; color: inherit;
+  border: 0; border-radius: 14px; padding: 16px; cursor: pointer; font: inherit;
+}
+.row1 { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.sname { font-family: var(--f-display); font-size: 19px; font-weight: 700; min-width: 0; overflow-wrap: anywhere; }
+.right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.pill { font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: var(--warn-bg); color: var(--warn); white-space: nowrap; }
+.subj[data-status="approved"] .pill { background: var(--ok-bg); color: var(--ok); }
+.subj[data-status="failed"] .pill { background: var(--bad-bg); color: var(--bad); }
+.chev { width: 9px; height: 9px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(45deg); transition: transform .15s; margin-bottom: 3px; }
+.subj-head[aria-expanded="true"] .chev { transform: rotate(-135deg); margin-bottom: -3px; }
+.meter { position: relative; height: 10px; border-radius: 6px; background: var(--track); margin: 16px 0 26px; }
+.fillmax, .fill { position: absolute; top: 0; bottom: 0; left: 0; border-radius: 6px; }
+.fillmax { background: var(--maxfill); }
+.fill { background: var(--accent); }
+.subj[data-status="failed"] .fill { background: var(--bad); }
+.tick { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--fg); }
+.ticklabel { position: absolute; top: 17px; transform: translateX(-50%); font-size: 11px; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.row3 { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 14px; }
+.sum { font-family: var(--f-display); font-size: 30px; font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.sum small { font-family: var(--f-body); font-size: 14px; font-weight: 500; color: var(--muted); }
+.verdict { font-weight: 600; min-width: 0; }
+.subj[data-status="approved"] .verdict { color: var(--ok); }
+.subj[data-status="failed"] .verdict { color: var(--bad); }
+
+.subj-body { border-top: 1px solid var(--line); padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+.field-label { display: block; font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
+.m { background: var(--surface2); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.mhead { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.mhead h3 { font-size: 17px; }
+.mtag { font-size: 12px; color: var(--muted); }
+.mval { font-family: var(--f-display); font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.direct { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.direct span { font-size: 13px; color: var(--muted); font-weight: 600; }
+.direct input { width: 84px; }
+.acts { display: flex; flex-direction: column; gap: 6px; }
+.acts.off { opacity: .45; }
+.arow { display: grid; grid-template-columns: minmax(0, 1fr) 64px 56px 32px; gap: 6px; align-items: center; }
+.arow.lab { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; }
+.arow.lab span:nth-child(2), .arow.lab span:nth-child(3) { text-align: right; padding-right: 4px; }
+.xbtn { height: 40px; border: 0; background: transparent; color: var(--muted); font-size: 20px; cursor: pointer; border-radius: 8px; }
+.none { font-size: 13px; color: var(--muted); padding: 2px 0 4px; }
+.mfoot { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.wsum { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.wsum.warn { color: var(--warn); font-weight: 600; }
+.del { display: flex; justify-content: flex-end; }
+#savestate { font-size: 12px; color: var(--muted); margin-top: 18px; text-align: center; }
+@media (prefers-reduced-motion: reduce) { .chev { transition: none; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>Média da Faculdade</h1>
+    <div class="rule">
+      <label for="target">Soma mínima M1 + M2 + M3</label>
+      <input class="f num" id="target" inputmode="decimal" autocomplete="off" aria-describedby="hint">
+      <span class="hint" id="hint">Média 6 em cada M dá 18; o sistema arredonda 17,75 para cima.</span>
+    </div>
+  </header>
+  <div class="bar">
+    <div id="summary"></div>
+    <button class="btn primary" id="addSubj" type="button">+ Matéria</button>
+  </div>
+  <main id="app"></main>
+  <div id="savestate" aria-live="polite"></div>
+</div>
+
+<script>
+(function () {
+  var LS = 'media-faculdade-v1';
+  var EPS = 1e-9;
+
+  function uid() { return Math.random().toString(36).slice(2, 9); }
+  function emptyM() { return { direct: '', acts: [] }; }
+  function defaults() {
+    return {
+      v: 1,
+      target: '17,75',
+      subjects: [
+        { id: uid(), name: 'Bioquímica', ms: [
+          { direct: '8,53', acts: [] },
+          { direct: '8,18', acts: [] },
+          emptyM()
+        ] },
+        { id: uid(), name: 'Histologia e Embriologia', ms: [
+          { direct: '4,4', acts: [] },
+          { direct: '', acts: [
+            { id: uid(), name: 'Prova teórica #2', grade: '4,0', weight: '5' },
+            { id: uid(), name: 'Prova prática #2', grade: '6,5', weight: '3' },
+            { id: uid(), name: 'Folha de consulta', grade: '10,0', weight: '2' }
+          ] },
+          emptyM()
+        ] }
+      ]
+    };
+  }
+  function normalize(d) {
+    var out = { v: 1, target: typeof d.target === 'string' ? d.target : '17,75', subjects: [] };
+    (d.subjects || []).forEach(function (s) {
+      var ms = [0, 1, 2].map(function (i) {
+        var m = (s.ms && s.ms[i]) || {};
+        return {
+          direct: typeof m.direct === 'string' ? m.direct : '',
+          acts: (m.acts || []).map(function (a) {
+            return { id: a.id || uid(), name: a.name || '', grade: a.grade == null ? '' : String(a.grade), weight: a.weight == null ? '' : String(a.weight) };
+          })
+        };
+      });
+      out.subjects.push({ id: s.id || uid(), name: s.name || '', ms: ms });
+    });
+    return out;
+  }
+
+  var state;
+  try {
+    var raw = localStorage.getItem(LS);
+    state = raw ? normalize(JSON.parse(raw)) : defaults();
+  } catch (e) { state = defaults(); }
+
+  function num(v) {
+    if (v === '' || v == null) return null;
+    var n = parseFloat(String(v).replace(',', '.'));
+    return isFinite(n) ? n : null;
+  }
+  function fmt(n) { return n.toFixed(2).replace('.', ','); }
+  function fmtW(n) { return (Math.round(n * 100) / 100).toString().replace('.', ','); }
+  function up2(x) { return Math.ceil(x * 100 - 1e-6) / 100; }
+  function clamp(p) { return Math.max(0, Math.min(100, p)); }
+
+  function calcM(m) {
+    var d = num(m.direct);
+    if (d !== null) return { state: 'closed', points: d, remaining: 0, totalW: 0, direct: true };
+    var pts = 0, filled = 0, total = 0;
+    m.acts.forEach(function (a) {
+      var w = num(a.weight) || 0, g = num(a.grade);
+      total += w;
+      if (g !== null) { pts += g * w / 10; filled += w; }
+    });
+    var rem = Math.max(0, 10 - filled);
+    return { state: rem <= EPS ? 'closed' : (filled > 0 ? 'partial' : 'empty'), points: pts, remaining: rem, totalW: total, direct: false };
+  }
+
+  function targetNum() { var t = num(state.target); return t === null ? 17.75 : t; }
+
+  function calcSubject(s) {
+    var target = targetNum();
+    var ms = s.ms.map(calcM);
+    var pts = ms.reduce(function (a, m) { return a + m.points; }, 0);
+    var remW = ms.reduce(function (a, m) { return a + m.remaining; }, 0);
+    var max = pts + remW;
+    var open = [];
+    ms.forEach(function (m, i) { if (m.remaining > EPS) open.push(i); });
+    var status, verdict;
+    if (pts >= target - EPS) {
+      status = 'approved';
+      verdict = 'Já passou. Soma ' + fmt(pts) + ', o mínimo é ' + fmt(target) + '.';
+    } else if (remW <= EPS) {
+      status = 'failed';
+      verdict = 'Fechou com ' + fmt(pts) + ', abaixo de ' + fmt(target) + '.';
+    } else if (max < target - EPS) {
+      status = 'failed';
+      verdict = 'Mesmo com 10 em tudo, chega a ' + fmt(max) + '.';
+    } else {
+      status = 'open';
+      var a = fmt(up2((target - pts) * 10 / remW));
+      if (open.length === 1) {
+        var i = open[0];
+        verdict = ms[i].state === 'empty'
+          ? 'Precisa de ' + a + ' na M' + (i + 1) + '.'
+          : 'Precisa de média ' + a + ' no que falta da M' + (i + 1) + ' (peso ' + fmtW(ms[i].remaining) + ').';
+      } else {
+        verdict = 'Precisa de média ' + a + ' em tudo que falta (' + open.map(function (i) { return 'M' + (i + 1); }).join(', ') + ').';
+      }
+    }
+    return { ms: ms, pts: pts, max: max, status: status, verdict: verdict, target: target };
+  }
+
+  function h(tag, props) {
+    var e = document.createElement(tag);
+    props = props || {};
+    for (var k in props) {
+      var v = props[k];
+      if (k === 'class') e.className = v;
+      else if (k === 'text') e.textContent = v;
+      else if (k === 'value') e.value = v;
+      else if (k.slice(0, 2) === 'on') e.addEventListener(k.slice(2), v);
+      else if (v === true) e.setAttribute(k, '');
+      else if (v !== false && v != null) e.setAttribute(k, v);
+    }
+    for (var i = 2; i < arguments.length; i++) {
+      var c = arguments[i];
+      if (c == null || c === false) continue;
+      e.append(c.nodeType ? c : document.createTextNode(c));
+    }
+    return e;
+  }
+
+  var root = document.getElementById('app');
+  var expanded = {};
+  var pendingFocus = null;
+  var dirty = false, dbDoc = null, writing = false, again = false, timer = null;
+
+  function setStatus(t) { document.getElementById('savestate').textContent = t; }
+
+  function persist() {
+    var snap;
+    try { snap = JSON.parse(JSON.stringify(state)); } catch (e) { return; }
+    try { localStorage.setItem(LS, JSON.stringify(snap)); } catch (e) {}
+    if (!dbDoc) { setStatus('Salvo neste navegador'); return; }
+    if (writing) { again = true; return; }
+    writing = true;
+    dbDoc.set(snap).then(function () { setStatus('Salvo na sua conta'); },
+      function () { setStatus('Salvo só neste navegador'); })
+      .then(function () { writing = false; if (again) { again = false; persist(); } });
+  }
+  function saveSoon() {
+    dirty = true;
+    setStatus('Salvando…');
+    clearTimeout(timer);
+    timer = setTimeout(persist, 600);
+  }
+
+  function validate(input, kind) {
+    var t = input.value.trim();
+    var n = num(t);
+    var bad = t !== '' && (n === null || n < 0 || n > 10);
+    input.classList.toggle('bad', bad);
+    input.setAttribute('aria-invalid', bad ? 'true' : 'false');
+  }
+
+  function applySubject(el, s) {
+    var r = calcSubject(s);
+    el.dataset.status = r.status;
+    el.querySelector('.sname').textContent = s.name || 'Matéria sem nome';
+    el.querySelector('.pill').textContent = r.status === 'approved' ? 'Aprovada' : r.status === 'failed' ? 'Reprovada' : 'Em andamento';
+    el.querySelector('.sum').firstChild.nodeValue = fmt(r.pts) + ' ';
+    el.querySelector('.sum small').textContent = '/ ' + fmt(r.target);
+    el.querySelector('.verdict').textContent = r.verdict;
+    el.querySelector('.fill').style.width = clamp(r.pts / 30 * 100) + '%';
+    el.querySelector('.fillmax').style.width = clamp(r.max / 30 * 100) + '%';
+    var tl = clamp(r.target / 30 * 100) + '%';
+    el.querySelector('.tick').style.left = tl;
+    el.querySelector('.ticklabel').style.left = tl;
+    el.querySelector('.ticklabel').textContent = fmt(r.target);
+    el.querySelector('.meter').setAttribute('aria-label',
+      'Soma atual ' + fmt(r.pts) + ', máximo possível ' + fmt(r.max) + ', mínimo para passar ' + fmt(r.target));
+    r.ms.forEach(function (m, i) {
+      var b = el.querySelector('[data-m="' + i + '"]');
+      b.querySelector('.mval').textContent = m.state === 'empty' ? '—' : fmt(m.points);
+      b.querySelector('.mtag').textContent = m.direct ? 'nota da M lançada'
+        : m.state === 'closed' ? 'fechada'
+        : m.state === 'partial' ? 'parcial, faltam ' + fmtW(m.remaining) + ' de peso'
+        : 'sem notas ainda';
+      b.querySelector('.acts').classList.toggle('off', m.direct);
+      var ws = b.querySelector('.wsum');
+      if (m.direct) { ws.textContent = 'Atividades ignoradas'; ws.classList.remove('warn'); }
+      else {
+        ws.textContent = 'Peso lançado ' + fmtW(m.totalW) + ' de 10';
+        ws.classList.toggle('warn', m.totalW > 10 + EPS);
+        if (m.totalW > 10 + EPS) ws.textContent += ' (passou de 10)';
+      }
+    });
+  }
+
+  function updateSummary() {
+    var c = { approved: 0, open: 0, failed: 0 };
+    state.subjects.forEach(function (s) { c[calcSubject(s).status]++; });
+    var n = state.subjects.length;
+    document.getElementById('summary').textContent = n === 0 ? '' :
+      n + (n === 1 ? ' matéria' : ' matérias') + ' · ' + c.open + ' em andamento · ' + c.approved + ' aprovadas · ' + c.failed + ' reprovadas';
+  }
+
+  function refreshAll() {
+    state.subjects.forEach(function (s) {
+      var el = root.querySelector('[data-sid="' + s.id + '"]');
+      if (el) applySubject(el, s);
+    });
+    updateSummary();
+  }
+
+  function onEdit() { refreshAll(); saveSoon(); }
+
+  function field(value, cls, ph, label, kind, onchange) {
+    var i = h('input', { class: 'f ' + cls, type: 'text', value: value, placeholder: ph, 'aria-label': label, autocomplete: 'off',
+      inputmode: kind === 'text' ? 'text' : 'decimal' });
+    if (kind !== 'text') validate(i, kind);
+    i.addEventListener('input', function () {
+      onchange(i.value);
+      if (kind !== 'text') validate(i, kind);
+      onEdit();
+    });
+    return i;
+  }
+
+  function buildActRow(m, a) {
+    var row = h('div', { class: 'arow' });
+    row.append(
+      field(a.name, '', 'Atividade', 'Nome da atividade', 'text', function (v) { a.name = v; }),
+      field(a.grade, 'num', 'Nota', 'Nota da atividade', 'grade', function (v) { a.grade = v; }),
+      field(a.weight, 'num', 'Peso', 'Peso da atividade', 'weight', function (v) { a.weight = v; }),
+      h('button', { class: 'xbtn', type: 'button', 'aria-label': 'Remover atividade', text: '×', onclick: function () {
+        m.acts = m.acts.filter(function (x) { return x !== a; });
+        render(); saveSoon();
+      } })
+    );
+    return row;
+  }
+
+  function buildM(s, m, i) {
+    var acts = h('div', { class: 'acts' });
+    if (m.acts.length) {
+      acts.append(h('div', { class: 'arow lab' }, h('span', { text: 'Atividade' }), h('span', { text: 'Nota' }), h('span', { text: 'Peso' }), h('span')));
+      m.acts.forEach(function (a) { acts.append(buildActRow(m, a)); });
+    } else {
+      acts.append(h('div', { class: 'none', text: 'Nenhuma atividade. Adicione provas, trabalhos e seminários com seus pesos.' }));
+    }
+    return h('section', { class: 'm', 'data-m': String(i) },
+      h('div', { class: 'mhead' },
+        h('h3', { text: 'M' + (i + 1) }),
+        h('span', { class: 'mtag' }),
+        h('span', { class: 'mval' })),
+      h('label', { class: 'direct' }, h('span', { text: 'Nota da M (se já saiu)' }),
+        field(m.direct, 'num', '—', 'Nota da M' + (i + 1), 'grade', function (v) { m.direct = v; })),
+      acts,
+      h('div', { class: 'mfoot' },
+        h('button', { class: 'btn', type: 'button', text: '+ Atividade', onclick: function () {
+          var a = { id: uid(), name: '', grade: '', weight: '' };
+          m.acts.push(a);
+          pendingFocus = a.id;
+          render(); saveSoon();
+        } }),
+        h('span', { class: 'wsum' })));
+  }
+
+  function buildSubject(s) {
+    var isOpen = !!expanded[s.id];
+    var body = h('div', { class: 'subj-body', hidden: !isOpen });
+    var nameLabel = h('div');
+    nameLabel.append(h('span', { class: 'field-label', text: 'Nome da matéria' }),
+      field(s.name, '', 'Ex.: Anatomia', 'Nome da matéria', 'text', function (v) { s.name = v; }));
+    body.append(nameLabel);
+    s.ms.forEach(function (m, i) { body.append(buildM(s, m, i)); });
+    var delBtn = h('button', { class: 'btn danger', type: 'button', text: 'Excluir matéria' });
+    var armTimer;
+    delBtn.addEventListener('click', function () {
+      if (!delBtn.classList.contains('armed')) {
+        delBtn.classList.add('armed');
+        delBtn.textContent = 'Toque de novo para excluir';
+        armTimer = setTimeout(function () { delBtn.classList.remove('armed'); delBtn.textContent = 'Excluir matéria'; }, 3500);
+        return;
+      }
+      clearTimeout(armTimer);
+      state.subjects = state.subjects.filter(function (x) { return x !== s; });
+      render(); saveSoon();
+    });
+    body.append(h('div', { class: 'del' }, delBtn));
+
+    var head = h('button', { class: 'subj-head', type: 'button', 'aria-expanded': isOpen ? 'true' : 'false' },
+      h('div', { class: 'row1' },
+        h('span', { class: 'sname' }),
+        h('span', { class: 'right' }, h('span', { class: 'pill' }), h('span', { class: 'chev' }))),
+      h('div', { class: 'meter' }, h('div', { class: 'fillmax' }), h('div', { class: 'fill' }), h('div', { class: 'tick' }), h('div', { class: 'ticklabel' })),
+      h('div', { class: 'row3' }, h('span', { class: 'sum' }, '', h('small')), h('span', { class: 'verdict' })));
+    head.addEventListener('click', function () {
+      var now = head.getAttribute('aria-expanded') !== 'true';
+      head.setAttribute('aria-expanded', now ? 'true' : 'false');
+      body.hidden = !now;
+      expanded[s.id] = now;
+    });
+    var el = h('article', { class: 'subj', 'data-sid': s.id }, head, body);
+    applySubject(el, s);
+    return el;
+  }
+
+  function render() {
+    root.replaceChildren();
+    if (!state.subjects.length) {
+      root.append(h('div', { class: 'empty', text: 'Nenhuma matéria ainda. Toque em + Matéria para começar.' }));
+    }
+    state.subjects.forEach(function (s) { root.append(buildSubject(s)); });
+    updateSummary();
+    if (pendingFocus) {
+      var found = null;
+      root.querySelectorAll('.arow').forEach(function () {});
+      state.subjects.forEach(function (s) { s.ms.forEach(function (m) {
+        m.acts.forEach(function (a, idx) {
+          if (a.id === pendingFocus) {
+            var sec = root.querySelector('[data-sid="' + s.id + '"] [data-m="' + s.ms.indexOf(m) + '"]');
+            var rows = sec && sec.querySelectorAll('.arow:not(.lab)');
+            found = rows && rows[idx] && rows[idx].querySelector('input');
+          }
+        });
+      }); });
+      if (found) found.focus();
+      pendingFocus = null;
+    }
+  }
+
+  document.getElementById('addSubj').addEventListener('click', function () {
+    var s = { id: uid(), name: '', ms: [emptyM(), emptyM(), emptyM()] };
+    state.subjects.push(s);
+    expanded[s.id] = true;
+    render(); saveSoon();
+    var el = root.querySelector('[data-sid="' + s.id + '"]');
+    if (el) { var i = el.querySelector('.subj-body input'); if (i) i.focus(); el.scrollIntoView({ block: 'nearest' }); }
+  });
+
+  var tgt = document.getElementById('target');
+  tgt.value = state.target;
+  tgt.addEventListener('input', function () { state.target = tgt.value; validate(tgt, 'weight'); onEdit(); });
+
+  render();
+  setStatus('Salvo neste navegador');
+
+  /* Guarda na conta do usuário quando o armazenamento do Claude está disponível. */
+  (function connect() {
+    try {
+      var c = window.claude;
+      if (!c || !c.use) return;
+      Promise.all([c.use('user'), c.use('db')]).then(function (r) {
+        var user = r[0], db = r[1];
+        if (!user || !db) return null;
+        return user.id().then(function (id) {
+          if (!id) return null;
+          var doc = db.doc('data/users/' + id + '/app');
+          var timeout = new Promise(function (_, rej) { setTimeout(function () { rej(new Error('timeout')); }, 10000); });
+          return Promise.race([doc.get(), timeout]).then(function (snap) {
+            dbDoc = doc;
+            if (dirty) { persist(); return; }
+            if (snap.exists) {
+              var d = snap.data();
+              if (d && Array.isArray(d.subjects)) {
+                state = normalize(d);
+                tgt.value = state.target;
+                render();
+              }
+            }
+            setStatus('Conectado à sua conta');
+          });
+        });
+      }).catch(function () {});
+    } catch (e) {}
+  })();
+})();
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('sw.js').catch(function () {});
+  });
+}
+</script>
+</body>
+</html>
