@@ -177,8 +177,19 @@
 
   function applySubject(el, s) {
     var r = calcSubject(s);
+    var previousStatus = el.dataset.status || '';
     el.dataset.status = r.status;
+    if (r.status === 'approved' && previousStatus && previousStatus !== 'approved') {
+      el.classList.remove('approved-pulse');
+      void el.offsetWidth;
+      el.classList.add('approved-pulse');
+      clearTimeout(el._approvedPulseTimer);
+      el._approvedPulseTimer = setTimeout(function () { el.classList.remove('approved-pulse'); }, 1800);
+    }
     el.querySelector('.sname').textContent = s.name || 'Matéria sem nome';
+    var subjectApproved = el.querySelector('.subject-approved');
+    subjectApproved.hidden = r.status !== 'approved';
+    subjectApproved.textContent = r.status === 'approved' ? '✓ Mínimo para aprovação atingido!' : '';
     var subjectFailed = el.querySelector('.subject-failed');
     subjectFailed.hidden = r.status !== 'failed';
     subjectFailed.textContent = r.status === 'failed' ? r.verdict : '';
@@ -370,7 +381,7 @@
 
     var head = h('button', { class: 'subj-head', type: 'button', 'aria-expanded': isOpen ? 'true' : 'false' },
       h('div', { class: 'row1' },
-        h('div', { class: 'name-stack' }, h('span', { class: 'sname' }), h('span', { class: 'subject-failed', hidden: true })),
+        h('div', { class: 'name-stack' }, h('span', { class: 'sname' }), h('span', { class: 'subject-approved', hidden: true }), h('span', { class: 'subject-failed', hidden: true })),
         h('span', { class: 'right' }, h('span', { class: 'pill' }), h('span', { class: 'chev' }))),
       h('div', { class: 'meter' }, h('div', { class: 'fillmax' }), h('div', { class: 'fill' }), h('div', { class: 'tick' }), h('div', { class: 'ticklabel' })),
       h('div', { class: 'row3' }, h('span', { class: 'sum' }, '', h('small')), h('span', { class: 'verdict' })));
