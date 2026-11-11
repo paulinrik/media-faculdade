@@ -145,12 +145,34 @@
     timer = setTimeout(persist, 600);
   }
 
+  function animateInvalid(el) {
+    if (!el) return;
+    el.classList.remove('invalid-pulse');
+    void el.offsetWidth;
+    el.classList.add('invalid-pulse');
+  }
   function validate(input, kind) {
     var t = input.value.trim();
     var n = num(t);
     var bad = t !== '' && (n === null || n < 0 || n > 10);
     input.classList.toggle('bad', bad);
     input.setAttribute('aria-invalid', bad ? 'true' : 'false');
+    if (bad) animateInvalid(input);
+  }
+  function focusInvalidM(subjectEl, subject) {
+    var invalidIndex = subject.ms.findIndex(function (m) {
+      var cm = calcM(m);
+      return cm.invalidWeight || cm.totalW > 10 + EPS;
+    });
+    if (invalidIndex < 0) return;
+    var target = subjectEl.querySelector('[data-m="' + invalidIndex + '"]');
+    if (!target) return;
+    var body = target.closest('.subj-body');
+    var head = subjectEl.querySelector('.subj-head');
+    if (body && body.hidden && head) head.click();
+    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    animateInvalid(target);
+    target.querySelectorAll('input[aria-invalid="true"]').forEach(animateInvalid);
   }
 
   function applySubject(el, s) {
@@ -171,6 +193,13 @@
       'Soma atual ' + fmt(r.pts) + ', máximo possível ' + fmt(r.max) + ', mínimo para passar ' + fmt(r.target));
     r.ms.forEach(function (m, i) {
       var b = el.querySelector('[data-m="' + i + '"]');
+      b.classList.toggle('invalid-m', m.invalidWeight || m.totalW > 10 + EPS);
+      b.classList.toggle('incomplete-m', !m.direct && !m.invalidWeight && m.totalW < 10 - EPS);
+      b.style.setProperty('--weight-progress', Math.max(0, Math.min(100, m.totalW / 10 * 100)) + '%');
+      var impossibleHere = r.status === 'failed' && r.max < r.target - EPS;
+      var mw = b.querySelector('.m-impossible');
+      mw.hidden = !impossibleHere;
+      mw.textContent = impossibleHere ? 'Mesmo com 10 em tudo, chega a ' + fmt(r.max) + '.' : '';
       b.querySelector('.mval').textContent = m.state === 'empty' ? '—' : fmt(m.points);
       b.querySelector('.mtag').textContent = m.direct ? 'nota da M lançada'
         : m.state === 'closed' ? 'fechada'
@@ -216,11 +245,13 @@
       di.classList.toggle('hint', needM !== null);
       b.querySelector('.hintline').hidden = !hinted;
       var ws = b.querySelector('.wsum');
-      if (m.direct) { ws.textContent = 'Atividades ignoradas'; ws.classList.remove('warn'); }
+      if (m.direct) { ws.textContent = 'Atividades ignoradas'; ws.classList.remove('warn','open-weight','complete-weight'); }
       else {
         ws.textContent = 'Peso lançado ' + fmtW(m.totalW) + ' de 10';
-        ws.classList.toggle('warn', m.totalW > 10 + EPS);
-        if (m.totalW > 10 + EPS) ws.textContent += ' (passou de 10)';
+        ws.classList.toggle('warn', m.totalW > 10 + EPS || m.invalidWeight);
+        ws.classList.toggle('open-weight', !m.invalidWeight && m.totalW < 10 - EPS);
+        ws.classList.toggle('complete-weight', !m.invalidWeight && Math.abs(m.totalW - 10) <= EPS);
+        if (m.totalW > 10 + EPS || m.invalidWeight) ws.textContent += ' · corrija os pesos';
       }
     });
   }
@@ -251,6 +282,11 @@
       onchange(i.value);
       if (kind !== 'text') validate(i, kind);
       onEdit();
+      if (kind === 'weight') {
+        var owner = i.closest('.subj');
+        var subject = owner && state.subjects.filter(function (s) { return s.id === owner.getAttribute('data-sid'); })[0];
+        if (subject && subject.ms.some(function (m) { var cm = calcM(m); return cm.invalidWeight || cm.totalW > 10 + EPS; })) focusInvalidM(owner, subject);
+      }
     });
     return i;
   }
@@ -276,7 +312,9 @@
       acts.append(h('div', { class: 'arow lab' }, h('span', { text: 'Atividade' }), h('span', { text: 'Nota' }), h('span', { text: 'Peso' }), h('span')));
       m.acts.forEach(function (a) { acts.append(buildActRow(m, a)); });
     } else {
-      acts.append(h('div', { class: 'none', text: 'Nenhuma atividade. Adicione provas, trabalhos e seminários com seus pesos.' }));
+      acts.append(h('div', { class: 'none', role: 'note' },
+        h('strong', { text: 'Esta M ainda está sem atividades.' }),
+        h('span', { text: 'Adicione provas, trabalhos e seminários com seus pesos para calcular sua nota.' })));
     }
     return h('section', { class: 'm', 'data-m': String(i) },
       h('div', { class: 'mhead' },
@@ -286,6 +324,7 @@
       h('label', { class: 'direct' }, h('span', { text: 'Nota da M (se já saiu)' }),
         field(m.direct, 'num', '—', 'Nota da M' + (i + 1), 'grade', function (v) { m.direct = v; })),
       acts,
+      h('div', { class: 'm-impossible', hidden: true, role: 'status' }),
       h('div', { class: 'hintline', hidden: true, text: 'Em verde: nota mínima em cada atividade que falta, tirando a mesma nota em todas. Embaixo, quantos pontos da M ela rende, pelo peso (regra de três).' }),
       h('div', { class: 'mfoot' },
         h('button', { class: 'btn', type: 'button', text: '+ Atividade', onclick: function () {
@@ -486,11 +525,13 @@
   function closeTargetSetup() { setupEl.hidden = true; state.targetSetupSeen = true; saveSoon(); }
   function openTargetSetup() { setupTarget.value = state.target; setupEl.hidden = false; setupTarget.focus(); }
   document.getElementById('setupUse18').addEventListener('click', function () { setTargetValue('18'); closeTargetSetup(); });
+  document.getElementById('setupUse1775').addEventListener('click', function () { setTargetValue('17,75'); closeTargetSetup(); });
   document.getElementById('setupSaveCustom').addEventListener('click', function () {
     if (!validTarget(setupTarget.value)) { setupTarget.classList.add('bad'); setupTarget.setAttribute('aria-invalid','true'); setupTarget.focus(); return; }
     setTargetValue(setupTarget.value.trim()); closeTargetSetup();
   });
   document.getElementById('use18').addEventListener('click', function () { setTargetValue('18'); });
+  document.getElementById('use1775').addEventListener('click', function () { setTargetValue('17,75'); });
   tgt.addEventListener('input', function () {
     state.target = tgt.value;
     var bad = !validTarget(tgt.value);
