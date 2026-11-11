@@ -41,7 +41,10 @@
     </div>
     <div>
       <label class="field-label" for="target">Soma mínima para passar (M1 + M2 + M3)</label>
-      <button class="btn" id="use18" type="button">Usar média mínima de 18,00</button>
+      <div class="target-presets">
+        <button class="btn" id="use18" type="button">Usar 18,00</button>
+        <button class="btn" id="use1775" type="button">Usar 17,75</button>
+      </div>
       <input class="f num" id="target" inputmode="decimal" autocomplete="off" aria-label="Média mínima manual">
     </div>
     <button class="btn" id="showTutorial" type="button">Ver tutorial</button>
@@ -51,7 +54,10 @@
   <div class="sheet">
     <div class="sheet-head"><h2 id="target-setup-title">Média mínima para passar</h2></div>
     <p class="tut-text">Na teoria, a soma necessária é 18,00. Você também pode definir outro valor manualmente.</p>
-    <button class="btn primary" id="setupUse18" type="button">Usar 18,00</button>
+    <div class="target-presets">
+      <button class="btn primary" id="setupUse18" type="button">Usar 18,00</button>
+      <button class="btn" id="setupUse1775" type="button">Usar 17,75</button>
+    </div>
     <label class="field-label" for="setupTarget">Ou informe sua média mínima</label>
     <input class="f num" id="setupTarget" inputmode="decimal" autocomplete="off" aria-label="Média mínima personalizada">
     <button class="btn" id="setupSaveCustom" type="button">Salvar média personalizada</button>
