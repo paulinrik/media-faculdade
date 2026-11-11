@@ -13,7 +13,7 @@ self.addEventListener('fetch', event => {
   const request = event.request;
   if (request.method !== 'GET' || new URL(request.url).origin !== self.location.origin) return;
   const url = new URL(request.url);
-  const isAppCode = /\\.(?:js|css|html)$/.test(url.pathname);
+  const isAppCode = /\.(?:js|css|html)$/.test(url.pathname);
   if (request.mode === 'navigate' || isAppCode) {
     event.respondWith(fetch(request).then(response => {
       if (response.ok) {
