@@ -621,12 +621,14 @@
                 remote.seenTutorial = remote.seenTutorial || state.seenTutorial;
                 state = remote;
                 tgt.value = state.target;
+                applyTheme(state.theme || 'auto', false);
                 render();
                 persist();
               } else {
                 remote.seenTutorial = remote.seenTutorial || state.seenTutorial;
                 state = remote;
                 tgt.value = state.target;
+                applyTheme(state.theme || 'auto', false);
                 render();
                 if (migrated) { migrated = false; saveSoon(); }
               }
