@@ -187,12 +187,6 @@
       el._approvedPulseTimer = setTimeout(function () { el.classList.remove('approved-pulse'); }, 1800);
     }
     el.querySelector('.sname').textContent = s.name || 'Matéria sem nome';
-    var subjectApproved = el.querySelector('.subject-approved');
-    subjectApproved.hidden = r.status !== 'approved';
-    subjectApproved.textContent = r.status === 'approved' ? '✓ Mínimo para aprovação atingido!' : '';
-    var subjectFailed = el.querySelector('.subject-failed');
-    subjectFailed.hidden = r.status !== 'failed';
-    subjectFailed.textContent = r.status === 'failed' ? r.verdict : '';
     el.querySelector('.pill').textContent = r.status === 'approved' ? 'Aprovada' : r.status === 'failed' ? 'Reprovada' : 'Em andamento';
     el.querySelector('.sum').firstChild.nodeValue = fmt(r.pts) + ' ';
     el.querySelector('.sum small').textContent = '/ ' + fmt(r.target);
@@ -209,6 +203,8 @@
       var b = el.querySelector('[data-m="' + i + '"]');
       b.classList.toggle('invalid-m', m.invalidWeight || m.totalW > 10 + EPS);
       b.classList.toggle('incomplete-m', !m.direct && !m.invalidWeight && m.totalW < 10 - EPS);
+      b.classList.toggle('complete-m', !m.direct && !m.invalidWeight && Math.abs(m.totalW - 10) <= EPS);
+      b.classList.toggle('direct-m', !!m.direct);
       b.style.setProperty('--weight-progress', Math.max(0, Math.min(100, m.totalW / 10 * 100)) + '%');
       /* Qualquer matéria em estado "reprovada" já não tem pontos suficientes
          para alcançar o mínimo: mostra o aviso dentro de cada M. */
@@ -279,9 +275,14 @@
   function updateSummary() {
     var c = { approved: 0, open: 0, failed: 0 };
     state.subjects.forEach(function (s) { c[calcSubject(s).status]++; });
-    var n = state.subjects.length;
-    document.getElementById('summary').textContent = n === 0 ? '' :
-      n + (n === 1 ? ' matéria' : ' matérias') + ' · ' + c.open + ' em andamento · ' + c.approved + ' aprovadas · ' + c.failed + ' reprovadas';
+    var box = document.getElementById('summary');
+    box.replaceChildren();
+    if (!state.subjects.length) return;
+    [['open', 'Em andamento', 'Em andamento', 's-open'], ['approved', 'Aprovada', 'Aprovadas', 's-ok'], ['failed', 'Reprovada', 'Reprovadas', 's-bad']].forEach(function (x) {
+      var n = c[x[0]];
+      box.append(h('div', { class: 'stat' + (n ? ' ' + x[3] : '') },
+        h('b', { text: String(n) }), h('span', { text: n === 1 ? x[1] : x[2] })));
+    });
   }
 
   function refreshAll() {
@@ -345,7 +346,7 @@
         field(m.direct, 'num', '—', 'Nota da M' + (i + 1), 'grade', function (v) { m.direct = v; })),
       acts,
       h('div', { class: 'm-impossible', hidden: true, role: 'status' }),
-      h('div', { class: 'hintline', hidden: true, text: 'Em verde: nota mínima em cada atividade que falta, tirando a mesma nota em todas. Embaixo, quantos pontos da M ela rende, pelo peso (regra de três).' }),
+      h('div', { class: 'hintline', hidden: true, text: 'Em azul: nota mínima em cada atividade que falta, tirando a mesma nota em todas. Embaixo, quantos pontos da M ela rende, pelo peso (regra de três).' }),
       h('div', { class: 'mfoot' },
         h('button', { class: 'btn', type: 'button', text: '+ Atividade', onclick: function () {
           var a = { id: uid(), name: '', grade: '', weight: '' };
@@ -381,7 +382,7 @@
 
     var head = h('button', { class: 'subj-head', type: 'button', 'aria-expanded': isOpen ? 'true' : 'false' },
       h('div', { class: 'row1' },
-        h('div', { class: 'name-stack' }, h('span', { class: 'sname' }), h('span', { class: 'subject-approved', hidden: true }), h('span', { class: 'subject-failed', hidden: true })),
+        h('div', { class: 'name-stack' }, h('span', { class: 'sname' })),
         h('span', { class: 'right' }, h('span', { class: 'pill' }), h('span', { class: 'chev' }))),
       h('div', { class: 'meter' }, h('div', { class: 'fillmax' }), h('div', { class: 'fill' }), h('div', { class: 'tick' }), h('div', { class: 'ticklabel' })),
       h('div', { class: 'row3' }, h('span', { class: 'sum' }, '', h('small')), h('span', { class: 'verdict' })));
@@ -482,7 +483,7 @@
     { t: '1. Adicione a matéria', x: 'Toque em + Matéria e escreva o nome. O cartão abre com M1, M2 e M3.', demo: demoAdd },
     { t: '2. Lance as atividades', x: 'Dentro de cada M, toque em + Atividade e preencha nome, nota e peso. Os pesos de uma M somam 10. Se a prova ainda não aconteceu, deixe a nota vazia e coloque só o peso.', demo: demoActs },
     { t: '3. A nota da M já saiu?', x: 'Digite em "Nota da M (se já saiu)". Ela vale no lugar das atividades daquela M.', demo: demoDirect },
-    { t: '4. Veja quanto falta', x: 'O cartão mostra a soma atual, a barra com a marca do mínimo e o que você precisa tirar. Os campos de nota vazios aparecem em verde com a nota mínima de cada atividade que falta.', demo: demoResult },
+    { t: '4. Veja quanto falta', x: 'O cartão mostra a soma atual, a barra com a marca do mínimo e o que você precisa tirar. Os campos de nota vazios aparecem em azul com a nota mínima de cada atividade que falta.', demo: demoResult },
     { t: 'Pronto', x: 'Para ver este tutorial de novo, toque no ícone de ajustes no alto da tela e em "Ver tutorial".', demo: demoGear }
   ];
 
@@ -524,10 +525,10 @@
     else document.documentElement.setAttribute('data-theme', theme);
     if (themeMode) themeMode.value = theme;
     document.querySelectorAll('meta[name="theme-color"]').forEach(function (meta) {
-      if (theme === 'dark') meta.content = '#0c1412';
-      else if (theme === 'light') meta.content = '#edf1ef';
-      else if (meta.media.indexOf('dark') >= 0) meta.content = '#0c1412';
-      else meta.content = '#edf1ef';
+      if (theme === 'dark') meta.content = '#0f1218';
+      else if (theme === 'light') meta.content = '#f5f6f8';
+      else if (meta.media.indexOf('dark') >= 0) meta.content = '#0f1218';
+      else meta.content = '#f5f6f8';
     });
     if (shouldSave) saveSoon();
   }
@@ -549,12 +550,19 @@
   var setupEl = document.getElementById('targetSetup');
   var setupTarget = document.getElementById('setupTarget');
   tgt.value = state.target;
+  function syncPresets() {
+    var n = num(state.target);
+    [['use18', 18], ['use1775', 17.75]].forEach(function (p) {
+      document.getElementById(p[0]).setAttribute('aria-pressed', n !== null && Math.abs(n - p[1]) < 1e-9 ? 'true' : 'false');
+    });
+  }
+  syncPresets();
   function validTarget(value) {
     var t = String(value).trim(), n = num(t);
     return t !== '' && n !== null && n > 0 && n <= 30;
   }
   function setTargetValue(value) {
-    state.target = value; tgt.value = value; setupTarget.value = value;
+    state.target = value; tgt.value = value; setupTarget.value = value; syncPresets();
     tgt.classList.toggle('bad', !validTarget(value));
     setupTarget.classList.toggle('bad', !validTarget(value));
     refreshAll(); saveSoon();
@@ -570,7 +578,7 @@
   document.getElementById('use18').addEventListener('click', function () { setTargetValue('18'); });
   document.getElementById('use1775').addEventListener('click', function () { setTargetValue('17,75'); });
   tgt.addEventListener('input', function () {
-    state.target = tgt.value;
+    state.target = tgt.value; syncPresets();
     var bad = !validTarget(tgt.value);
     tgt.classList.toggle('bad', bad); tgt.setAttribute('aria-invalid', bad ? 'true' : 'false');
     if (!bad) onEdit(); else refreshAll();
@@ -631,14 +639,14 @@
                 state.subjects.forEach(function (x) { if (!ids[x.id]) remote.subjects.push(x); });
                 remote.seenTutorial = remote.seenTutorial || state.seenTutorial;
                 state = remote;
-                tgt.value = state.target;
+                tgt.value = state.target; syncPresets();
                 applyTheme(state.theme || 'auto', false);
                 render();
                 persist();
               } else {
                 remote.seenTutorial = remote.seenTutorial || state.seenTutorial;
                 state = remote;
-                tgt.value = state.target;
+                tgt.value = state.target; syncPresets();
                 applyTheme(state.theme || 'auto', false);
                 render();
                 if (migrated) { migrated = false; saveSoon(); }

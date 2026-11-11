@@ -1,6 +1,6 @@
 /* Cache offline do Média da Univali — versão atualizada */
-const CACHE_NAME = 'media-univali-v5';
-const APP_FILES = ['./','./index.html','./styles.css','./app.js','./manifest.webmanifest','./icons/favicon.png','./icons/apple-touch-icon.png','./icons/icon-192.png','./icons/icon-512.png','./icons/maskable-512.png'];
+const CACHE_NAME = 'media-univali-v6';
+const APP_FILES = ['./','./index.html','./styles.css','./app.js','./manifest.webmanifest','./icons/favicon.png','./icons/apple-touch-icon.png','./icons/icon-192.png','./icons/icon-512.png','./icons/maskable-512.png','./fonts/ibm-plex-sans-latin-400-normal.woff2','./fonts/ibm-plex-sans-latin-500-normal.woff2','./fonts/ibm-plex-sans-latin-600-normal.woff2'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_FILES)));
   self.skipWaiting();

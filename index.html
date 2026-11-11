@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#edf1ef" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#0c1412" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f5f6f8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0f1218" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Univali">
@@ -13,9 +13,8 @@
 <link rel="icon" type="image/png" href="icons/favicon.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <title>Média da Univali</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Figtree:wght@400;500;600;700&display=swap">
+<link rel="preload" href="fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/ibm-plex-sans-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -23,10 +22,11 @@
 <div class="wrap">
   <header class="top">
     <h1>Média da Univali</h1>
-    <button class="gear" id="openSettings" type="button" aria-label="Configurações"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg></button>
+    <button class="gear" id="openSettings" type="button" aria-label="Configurações"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg></button>
   </header>
+  <div id="summary" role="group" aria-label="Resumo das matérias"></div>
   <div class="bar">
-    <div id="summary"></div>
+    <h2 class="section-title">Matérias</h2>
     <button class="btn primary" id="addSubj" type="button">+ Matéria</button>
   </div>
   <main id="app"></main>
@@ -37,42 +37,48 @@
   <div class="sheet">
     <div class="sheet-head">
       <h2 id="settings-title">Configurações</h2>
-      <button class="btn" id="closeSettings" type="button">Fechar</button>
+      <button class="btn sm" id="closeSettings" type="button">Fechar</button>
     </div>
     <div>
-      <label class="field-label" for="themeMode">Tema do aplicativo</label>
-      <select class="f" id="themeMode" aria-label="Tema do aplicativo">
+      <label class="field-label" for="themeMode">Tema</label>
+      <select class="f" id="themeMode">
         <option value="auto">Automático (seguir o dispositivo)</option>
         <option value="light">Claro</option>
         <option value="dark">Escuro</option>
       </select>
     </div>
     <div>
-      <label class="field-label" for="target">Soma mínima para passar (M1 + M2 + M3)</label>
-      <div class="target-presets">
-        <button class="btn" id="use18" type="button">Usar 18,00</button>
-        <button class="btn" id="use1775" type="button" aria-label="Usar 17,75. Na prática, se as notas chegarem a 17,75 o sistema arredonda para 18 e você é aprovado(a).">17,75 → arredonda para 18</button>
-        <small class="preset-note">Na prática, se as notas chegarem a 17,75 o sistema arredonda para 18 e você é aprovado(a).</small>
+      <span class="field-label" id="target-label">Soma mínima para passar (M1 + M2 + M3)</span>
+      <div class="target-row" role="group" aria-labelledby="target-label">
+        <div class="seg">
+          <button id="use18" type="button" aria-pressed="false">18,00</button>
+          <button id="use1775" type="button" aria-pressed="false">17,75</button>
+        </div>
+        <input class="f num" id="target" inputmode="decimal" autocomplete="off" placeholder="Outro valor" aria-label="Outro valor para a soma mínima">
       </div>
-      <input class="f num" id="target" inputmode="decimal" autocomplete="off" aria-label="Média mínima manual">
+      <p class="help">Na teoria, a soma necessária é 18,00. Na prática, se as notas chegarem a 17,75 o sistema arredonda para 18 e você é aprovado(a).</p>
     </div>
     <button class="btn" id="showTutorial" type="button">Ver tutorial</button>
   </div>
 </div>
+
 <div class="overlay" id="targetSetup" hidden role="dialog" aria-modal="true" aria-labelledby="target-setup-title">
   <div class="sheet">
-    <div class="sheet-head"><h2 id="target-setup-title">Média mínima para passar</h2></div>
-    <p class="tut-text">Na teoria, a soma necessária é 18,00. Você também pode definir outro valor manualmente.</p>
-    <div class="target-presets">
+    <h2 id="target-setup-title">Média mínima para passar</h2>
+    <p class="tut-text">Escolha a soma mínima de M1 + M2 + M3. Você pode mudar isso depois em Configurações.</p>
+    <div class="choice">
       <button class="btn primary" id="setupUse18" type="button">Usar 18,00</button>
-      <button class="btn" id="setupUse1775" type="button" aria-label="Usar 17,75. Na prática, se as notas chegarem a 17,75 o sistema arredonda para 18 e você é aprovado(a).">17,75 → arredonda para 18</button>
-      <small class="preset-note">Na prática, se as notas chegarem a 17,75 o sistema arredonda para 18 e você é aprovado(a).</small>
+      <button class="btn" id="setupUse1775" type="button">Usar 17,75</button>
     </div>
-    <label class="field-label" for="setupTarget">Ou informe sua média mínima</label>
-    <input class="f num" id="setupTarget" inputmode="decimal" autocomplete="off" aria-label="Média mínima personalizada">
-    <button class="btn" id="setupSaveCustom" type="button">Salvar média personalizada</button>
+    <p class="help">Na teoria, a soma necessária é 18,00. Na prática, se as notas chegarem a 17,75 o sistema arredonda para 18 e você é aprovado(a).</p>
+    <p class="divider">ou</p>
+    <div class="target-row">
+      <input class="f num" id="setupTarget" inputmode="decimal" autocomplete="off" placeholder="Outro valor" aria-label="Média mínima personalizada">
+      <button class="btn" id="setupSaveCustom" type="button">Salvar valor</button>
+    </div>
   </div>
 </div>
+
 <div class="overlay" id="tutorial" hidden role="dialog" aria-modal="true" aria-labelledby="tut-title">
   <div class="sheet"></div>
 </div>
