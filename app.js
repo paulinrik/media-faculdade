@@ -6,11 +6,11 @@
   function emptyM() { return { direct: '', acts: [] }; }
   var migrated = false;
   function defaults() {
-    return { v: 3, target: '18', seenTutorial: false, targetSetupSeen: false, subjects: [] };
+    return { v: 4, target: '18', theme: 'auto', seenTutorial: false, targetSetupSeen: false, subjects: [] };
   }
   function normalize(d) {
     var old = !d.v || d.v < 2;
-    var out = { v: 3, target: typeof d.target === 'string' ? d.target : '18', seenTutorial: !!d.seenTutorial, targetSetupSeen: !!d.targetSetupSeen, subjects: [] };
+    var out = { v: 4, target: typeof d.target === 'string' ? d.target : '18', theme: ['auto','light','dark'].indexOf(d.theme) >= 0 ? d.theme : 'auto', seenTutorial: !!d.seenTutorial, targetSetupSeen: !!d.targetSetupSeen, subjects: [] };
     (d.subjects || []).forEach(function (s) {
       if (old && (s.name === 'Bioquímica' || s.name === 'Histologia e Embriologia')) { migrated = true; return; }
       var ms = [0, 1, 2].map(function (i) {
@@ -228,10 +228,8 @@
         if (act && !m.direct && w !== null && w > 0 && !r.invalidWeights) {
           if (r.status === 'approved') need = 0;
           else if (r.status === 'open') {
-            var remainingAll = r.ms.reduce(function (sum, item) { return sum + item.remaining; }, 0);
-            var deficit = Math.max(0, r.target - r.pts);
-            var otherRemaining = Math.max(0, remainingAll - w);
-            need = up2(Math.max(0, (deficit - otherRemaining) * 10 / w));
+            /* Mesma nota em todas as atividades ainda sem nota. */
+            need = r.avgNeeded;
           }
         }
         var show = !!act && !m.direct && need !== null && g === null && w > 0;
@@ -507,6 +505,23 @@
     if (!state.seenTutorial) { state.seenTutorial = true; writeLocal(); }
     if (!state.targetSetupSeen) openTargetSetup();
   }
+  var themeMode = document.getElementById('themeMode');
+  function applyTheme(value, shouldSave) {
+    var theme = ['auto','light','dark'].indexOf(value) >= 0 ? value : 'auto';
+    state.theme = theme;
+    if (theme === 'auto') document.documentElement.removeAttribute('data-theme');
+    else document.documentElement.setAttribute('data-theme', theme);
+    if (themeMode) themeMode.value = theme;
+    document.querySelectorAll('meta[name="theme-color"]').forEach(function (meta) {
+      if (theme === 'dark') meta.content = '#0c1412';
+      else if (theme === 'light') meta.content = '#edf1ef';
+      else if (meta.media.indexOf('dark') >= 0) meta.content = '#0c1412';
+      else meta.content = '#edf1ef';
+    });
+    if (shouldSave) saveSoon();
+  }
+  applyTheme(state.theme || 'auto', false);
+  if (themeMode) themeMode.addEventListener('change', function () { applyTheme(themeMode.value, true); });
   function openSettings() { setEl.hidden = false; document.getElementById('closeSettings').focus(); }
   function closeSettings() { setEl.hidden = true; }
 
@@ -555,6 +570,7 @@
   });
 
   render();
+  applyTheme(state.theme || 'auto', false);
   setStatus('Salvo neste navegador');
   migrated = false;
   if (!state.seenTutorial) openTutorial(0);
@@ -562,7 +578,23 @@
 
   /* Registra o app para instalação e uso offline. */
   if ('serviceWorker' in navigator) {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('./sw.js').catch(function () {}); });
+    var hadController = !!navigator.serviceWorker.controller;
+    var refreshingForUpdate = false;
+    navigator.serviceWorker.addEventListener('controllerchange', function () {
+      if (hadController && !refreshingForUpdate) {
+        refreshingForUpdate = true;
+        window.location.reload();
+      }
+      hadController = true;
+    });
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' }).then(function (registration) {
+        registration.update().catch(function () {});
+        document.addEventListener('visibilitychange', function () {
+          if (!document.hidden) registration.update().catch(function () {});
+        });
+      }).catch(function () {});
+    });
   }
 
   /* Guarda na conta do usuário quando o armazenamento do Claude está disponível. */
