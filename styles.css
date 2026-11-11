@@ -204,7 +204,18 @@ input.f.bad { border-color: var(--bad); background: var(--bad-bg); }
 .none strong { color: var(--accent); font-size: 13px; }
 .none span { font-size: 12.5px; line-height: 1.45; }
 .target-presets { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+@keyframes invalidPulseReduced {
+  0%,100% { outline: 0 solid transparent; filter: none; }
+  50% { outline: 3px solid color-mix(in srgb, var(--bad) 55%, transparent); filter: brightness(1.12); }
+}
 @media (prefers-reduced-motion: reduce) {
-  .invalid-pulse, .m-impossible, .m.incomplete-m .wsum.open-weight { animation: none !important; }
+  /* Mantém um aviso perceptível sem deslocamentos bruscos. */
+  .invalid-pulse { animation: invalidPulseReduced .9s ease-in-out 2 !important; }
+  .m-impossible { animation: warningIn .35s ease-out both !important; }
+  .m.incomplete-m .wsum.open-weight { animation: none !important; }
   .m.incomplete-m .mfoot::before { transition: none; }
 }
+.preset-note { display: block; color: var(--muted); font-size: 12px; line-height: 1.4; margin: 4px 0 8px; }
+.target-presets { align-items: center; }
+.target-presets .btn { min-height: 40px; height: auto; padding-top: 8px; padding-bottom: 8px; }
+
