@@ -196,10 +196,18 @@
       b.classList.toggle('invalid-m', m.invalidWeight || m.totalW > 10 + EPS);
       b.classList.toggle('incomplete-m', !m.direct && !m.invalidWeight && m.totalW < 10 - EPS);
       b.style.setProperty('--weight-progress', Math.max(0, Math.min(100, m.totalW / 10 * 100)) + '%');
-      var impossibleHere = r.status === 'failed' && r.max < r.target - EPS;
+      /* Qualquer matéria em estado "reprovada" já não tem pontos suficientes
+         para alcançar o mínimo: mostra o aviso dentro de cada M. */
+      var impossibleHere = r.status === 'failed';
       var mw = b.querySelector('.m-impossible');
-      mw.hidden = !impossibleHere;
-      mw.textContent = impossibleHere ? 'Você já está reprovado(a): mesmo com 10 em tudo, chega a ' + fmt(r.max) + '.' : '';
+      if (mw) {
+        mw.hidden = false;
+        mw.style.display = impossibleHere ? 'block' : 'none';
+        mw.setAttribute('aria-hidden', impossibleHere ? 'false' : 'true');
+        mw.textContent = impossibleHere
+          ? 'Você já está reprovado(a). Mesmo com 10 em tudo, sua soma final será ' + fmt(r.max) + '.'
+          : '';
+      }
       b.querySelector('.mval').textContent = m.state === 'empty' ? '—' : fmt(m.points);
       b.querySelector('.mtag').textContent = m.direct ? 'nota da M lançada'
         : m.state === 'closed' ? 'fechada'
