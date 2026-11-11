@@ -199,7 +199,7 @@
       var impossibleHere = r.status === 'failed' && r.max < r.target - EPS;
       var mw = b.querySelector('.m-impossible');
       mw.hidden = !impossibleHere;
-      mw.textContent = impossibleHere ? 'Mesmo com 10 em tudo, chega a ' + fmt(r.max) + '.' : '';
+      mw.textContent = impossibleHere ? 'Você já está reprovado(a): mesmo com 10 em tudo, chega a ' + fmt(r.max) + '.' : '';
       b.querySelector('.mval').textContent = m.state === 'empty' ? '—' : fmt(m.points);
       b.querySelector('.mtag').textContent = m.direct ? 'nota da M lançada'
         : m.state === 'closed' ? 'fechada'
