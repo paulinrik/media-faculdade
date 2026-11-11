@@ -219,3 +219,7 @@ input.f.bad { border-color: var(--bad); background: var(--bad-bg); }
 .target-presets { align-items: center; }
 .target-presets .btn { min-height: 40px; height: auto; padding-top: 8px; padding-bottom: 8px; }
 
+
+/* Garante que o aviso dentro da M apareça em todos os navegadores */
+.m .m-impossible[hidden] { display: none !important; }
+.m .m-impossible:not([hidden]) { display: block; width: 100%; box-sizing: border-box; }
