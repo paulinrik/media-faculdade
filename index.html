@@ -43,7 +43,8 @@
       <label class="field-label" for="target">Soma mínima para passar (M1 + M2 + M3)</label>
       <div class="target-presets">
         <button class="btn" id="use18" type="button">Usar 18,00</button>
-        <button class="btn" id="use1775" type="button">Usar 17,75</button>
+        <button class="btn" id="use1775" type="button" aria-label="Usar 17,75. Na prática, se as notas chegarem a 17,75 o sistema arredonda para 18 e você é aprovado(a).">17,75 → arredonda para 18</button>
+        <small class="preset-note">Na prática, se as notas chegarem a 17,75 o sistema arredonda para 18 e você é aprovado(a).</small>
       </div>
       <input class="f num" id="target" inputmode="decimal" autocomplete="off" aria-label="Média mínima manual">
     </div>
@@ -56,7 +57,8 @@
     <p class="tut-text">Na teoria, a soma necessária é 18,00. Você também pode definir outro valor manualmente.</p>
     <div class="target-presets">
       <button class="btn primary" id="setupUse18" type="button">Usar 18,00</button>
-      <button class="btn" id="setupUse1775" type="button">Usar 17,75</button>
+      <button class="btn" id="setupUse1775" type="button" aria-label="Usar 17,75. Na prática, se as notas chegarem a 17,75 o sistema arredonda para 18 e você é aprovado(a).">17,75 → arredonda para 18</button>
+      <small class="preset-note">Na prática, se as notas chegarem a 17,75 o sistema arredonda para 18 e você é aprovado(a).</small>
     </div>
     <label class="field-label" for="setupTarget">Ou informe sua média mínima</label>
     <input class="f num" id="setupTarget" inputmode="decimal" autocomplete="off" aria-label="Média mínima personalizada">
