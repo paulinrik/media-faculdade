@@ -182,3 +182,29 @@ input.num { text-align: right; font-variant-numeric: tabular-nums; }
 #targetSetup .sheet { gap: 14px; }
 #targetSetup .tut-text { color: var(--muted); }
 #setupTarget { width: 100%; }
+
+/* Feedback visual para validações e pesos em aberto */
+@keyframes invalidPulse {
+  0%,100% { transform: translateX(0); box-shadow: 0 0 0 0 color-mix(in srgb, var(--bad) 0%, transparent); }
+  15%,45%,75% { transform: translateX(-3px); }
+  30%,60%,90% { transform: translateX(3px); }
+  50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--bad) 22%, transparent); }
+}
+.invalid-pulse { animation: invalidPulse .72s ease-in-out 2; }
+input.f.bad { border-color: var(--bad); background: var(--bad-bg); }
+.m { position: relative; overflow: hidden; transition: border-color .2s, box-shadow .2s; }
+.m.incomplete-m { border: 1px solid color-mix(in srgb, var(--accent) 34%, var(--line)); }
+.m.incomplete-m .wsum.open-weight { color: var(--accent); font-weight: 700; animation: weightBreath 2.4s ease-in-out infinite; }
+.m.incomplete-m .mfoot::before { content: ''; display: block; width: var(--weight-progress, 0%); max-width: 100%; height: 3px; position: absolute; bottom: 0; left: 0; background: var(--accent); opacity: .65; transition: width .35s ease; }
+.m.invalid-m { border: 1px solid var(--bad); box-shadow: 0 0 0 2px color-mix(in srgb, var(--bad) 15%, transparent); }
+@keyframes weightBreath { 0%,100% { opacity: .72; } 50% { opacity: 1; text-shadow: 0 0 9px color-mix(in srgb, var(--accent) 40%, transparent); } }
+.m-impossible { padding: 9px 11px; border-radius: 8px; color: var(--bad); background: var(--bad-bg); border: 1px solid color-mix(in srgb, var(--bad) 35%, transparent); font-size: 13px; font-weight: 700; animation: warningIn .45s ease both, invalidPulse .72s ease-in-out 1; }
+@keyframes warningIn { from { opacity: 0; transform: translateY(-7px); } to { opacity: 1; transform: translateY(0); } }
+.none { padding: 12px; border: 1px dashed color-mix(in srgb, var(--accent) 55%, var(--line)); border-radius: 9px; background: color-mix(in srgb, var(--accent) 7%, var(--surface)); color: var(--fg); display: flex; flex-direction: column; gap: 4px; }
+.none strong { color: var(--accent); font-size: 13px; }
+.none span { font-size: 12.5px; line-height: 1.45; }
+.target-presets { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+@media (prefers-reduced-motion: reduce) {
+  .invalid-pulse, .m-impossible, .m.incomplete-m .wsum.open-weight { animation: none !important; }
+  .m.incomplete-m .mfoot::before { transition: none; }
+}
