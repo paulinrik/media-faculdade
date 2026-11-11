@@ -25,7 +25,7 @@ body { margin: 0; }
   --f-body: 'Figtree', system-ui, -apple-system, 'Segoe UI', sans-serif;
 }
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
+  :root:not([data-theme="light"]):not([data-theme="dark"]) {
     --bg: #0c1412;
     --surface: #141f1c;
     --surface2: #1a2723;
@@ -114,6 +114,7 @@ input.f.hint::placeholder { color: var(--accent); opacity: 1; font-weight: 700; 
 .hintline { font-size: 12.5px; color: var(--muted); }
 input.num { text-align: right; font-variant-numeric: tabular-nums; }
 #target { width: 84px; }
+#themeMode { width: 100%; height: 42px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--fg); padding: 0 10px; font: 500 15px var(--f-body); }
 .bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin: 22px 0 14px; }
 #summary { color: var(--muted); font-size: 14px; }
 .btn {
