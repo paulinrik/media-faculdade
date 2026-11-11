@@ -80,10 +80,10 @@
       verdict = 'Já passou. Soma ' + fmt(pts) + ', o mínimo é ' + fmt(target) + '.';
     } else if (remW <= EPS) {
       status = 'failed';
-      verdict = 'Fechou com ' + fmt(pts) + ', abaixo de ' + fmt(target) + '.';
+      verdict = 'Você já está reprovado(a). Sua soma final foi ' + fmt(pts) + ', abaixo do mínimo de ' + fmt(target) + '.';
     } else if (max < target - EPS) {
       status = 'failed';
-      verdict = 'Mesmo com 10 em tudo, chega a ' + fmt(max) + '.';
+      verdict = 'Você já está reprovado(a). Mesmo com 10 em tudo, sua soma final será ' + fmt(max) + ', abaixo do mínimo de ' + fmt(target) + '.';
     } else {
       status = 'open';
       avgNeeded = up2((target - pts) * 10 / remW);
@@ -94,7 +94,7 @@
           ? 'Precisa de ' + a + ' na M' + (i + 1) + '.'
           : 'Precisa de média ' + a + ' no que falta da M' + (i + 1) + ' (peso ' + fmtW(ms[i].remaining) + ').';
       } else {
-        verdict = 'Precisa de média ' + a + ' em tudo que falta (' + open.map(function (i) { return 'M' + (i + 1); }).join(', ') + ').';
+        verdict = 'Precisa de ' + a + ' em cada M que falta, individualmente (' + open.map(function (i) { return 'M' + (i + 1); }).join(' e ') + ').';
       }
     }
     return { ms: ms, pts: pts, max: max, status: status, verdict: verdict, target: target, avgNeeded: avgNeeded, invalidWeights: invalidWeights };
@@ -179,6 +179,9 @@
     var r = calcSubject(s);
     el.dataset.status = r.status;
     el.querySelector('.sname').textContent = s.name || 'Matéria sem nome';
+    var subjectFailed = el.querySelector('.subject-failed');
+    subjectFailed.hidden = r.status !== 'failed';
+    subjectFailed.textContent = r.status === 'failed' ? r.verdict : '';
     el.querySelector('.pill').textContent = r.status === 'approved' ? 'Aprovada' : r.status === 'failed' ? 'Reprovada' : 'Em andamento';
     el.querySelector('.sum').firstChild.nodeValue = fmt(r.pts) + ' ';
     el.querySelector('.sum small').textContent = '/ ' + fmt(r.target);
@@ -369,7 +372,7 @@
 
     var head = h('button', { class: 'subj-head', type: 'button', 'aria-expanded': isOpen ? 'true' : 'false' },
       h('div', { class: 'row1' },
-        h('span', { class: 'sname' }),
+        h('div', { class: 'name-stack' }, h('span', { class: 'sname' }), h('span', { class: 'subject-failed', hidden: true })),
         h('span', { class: 'right' }, h('span', { class: 'pill' }), h('span', { class: 'chev' }))),
       h('div', { class: 'meter' }, h('div', { class: 'fillmax' }), h('div', { class: 'fill' }), h('div', { class: 'tick' }), h('div', { class: 'ticklabel' })),
       h('div', { class: 'row3' }, h('span', { class: 'sum' }, '', h('small')), h('span', { class: 'verdict' })));
