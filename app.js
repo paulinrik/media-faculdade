@@ -48,14 +48,16 @@
   function calcM(m) {
     var d = num(m.direct);
     if (d !== null) return { state: 'closed', points: d, remaining: 0, totalW: 0, direct: true };
-    var pts = 0, filled = 0, total = 0;
+    var pts = 0, filled = 0, total = 0, invalidWeight = false;
     m.acts.forEach(function (a) {
-      var w = num(a.weight) || 0, g = num(a.grade);
+      var w = num(a.weight), g = num(a.grade);
+      if (a.weight !== '' && a.weight != null && (w === null || w < 0 || w > 10)) invalidWeight = true;
+      w = w || 0;
       total += w;
       if (g !== null) { pts += g * w / 10; filled += w; }
     });
     var rem = Math.max(0, 10 - filled);
-    return { state: rem <= EPS ? 'closed' : (filled > 0 ? 'partial' : 'empty'), points: pts, remaining: rem, totalW: total, direct: false };
+    return { state: rem <= EPS ? 'closed' : (filled > 0 ? 'partial' : 'empty'), points: pts, remaining: rem, totalW: total, invalidWeight: invalidWeight, direct: false };
   }
 
   function targetNum() { var t = num(state.target); return t === null ? 18 : t; }
@@ -69,7 +71,7 @@
     var open = [];
     ms.forEach(function (m, i) { if (m.remaining > EPS) open.push(i); });
     var status, verdict, avgNeeded = null;
-    var invalidWeights = ms.some(function (m) { return m.totalW > 10 + EPS; });
+    var invalidWeights = ms.some(function (m) { return m.invalidWeight || m.totalW > 10 + EPS; });
     if (invalidWeights) {
       status = 'open';
       verdict = 'A soma dos pesos de uma ou mais M passou de 10. Corrija os pesos para calcular corretamente.';
@@ -203,7 +205,7 @@
         }
         pe.textContent = txt;
         var weightInput = row.children[2];
-        var totalWeightInvalid = m.totalW > 10 + EPS;
+        var totalWeightInvalid = m.invalidWeight || m.totalW > 10 + EPS;
         weightInput.classList.toggle('bad', totalWeightInvalid || (w !== null && (w < 0 || w > 10)));
         weightInput.setAttribute('aria-invalid', totalWeightInvalid || (w !== null && (w < 0 || w > 10)) ? 'true' : 'false');
         if (show) hinted = true;
